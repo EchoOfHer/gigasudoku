@@ -64,6 +64,7 @@ const resultModal = document.getElementById('result-modal');
 const pauseModal = document.getElementById('pause-modal');
 const helpCloseBtn = document.getElementById('help-close-btn');
 const resultCloseBtn = document.getElementById('result-close-btn');
+const resultReviewBtn = document.getElementById('result-review-btn');
 const resumeBtn = document.getElementById('resume-btn');
 const boardLoader = document.getElementById('board-loader');
 const loaderText = document.getElementById('loader-text');
@@ -982,6 +983,9 @@ helpBtn.addEventListener('click', () => {
 });
 helpCloseBtn.addEventListener('click', () => {
   helpModal.classList.remove('active');
+});
+resultReviewBtn.addEventListener('click', () => {
+  resultModal.classList.remove('active');
 });
 resultCloseBtn.addEventListener('click', () => {
   resultModal.classList.remove('active');
