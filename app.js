@@ -160,6 +160,7 @@ function initWorker() {
       hideLoader();
       isGenerating = false;
       renderBoard();
+      resetZoomPan();
       updateProgress();
       resetTimer();
       startTimer();
@@ -648,6 +649,7 @@ document.getElementById('zoom-out-btn').addEventListener('click', () => {
 document.getElementById('zoom-reset-btn').addEventListener('click', () => {
   resetZoomPan();
 });
+boardViewport.addEventListener('dblclick', resetZoomPan);
 
 // --- Timer & UI States ---
 
