@@ -572,7 +572,7 @@ function renderKeypad() {
     
     const countBadge = document.createElement('span');
     countBadge.classList.add('count-badge');
-    countBadge.textContent = `${counts[val]}/${size}`;
+    countBadge.textContent = counts[val];
     keyBtn.appendChild(countBadge);
 
     // If fully placed, mark completed
