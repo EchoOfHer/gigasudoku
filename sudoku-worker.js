@@ -18,6 +18,13 @@ self.onmessage = function (e) {
     } else if (type === 'validate') {
       const validation = validateBoard(board);
       self.postMessage({ type: 'validate', ...validation });
+    } else if (type === 'submit_check') {
+      const solution = solveSudoku(board);
+      self.postMessage({
+        type: 'submit_check',
+        success: !!solution,
+        userSolution: solution
+      });
     }
   } catch (error) {
     self.postMessage({ type: 'error', message: error.message });
@@ -175,6 +182,9 @@ function solveSudoku(flatBoard) {
       if (val !== null && val !== undefined && val !== "") {
         const numVal = parseInt(val, 10);
         const boxIdx = Math.floor(r / K) * K + Math.floor(c / K);
+        if (rowUsed[r][numVal] || colUsed[c][numVal] || boxUsed[boxIdx][numVal]) {
+          return null; // Initial duplicate exists, board is unsolvable
+        }
         rowUsed[r][numVal] = true;
         colUsed[c][numVal] = true;
         boxUsed[boxIdx][numVal] = true;

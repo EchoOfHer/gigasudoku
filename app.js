@@ -206,6 +206,13 @@ function initWorker() {
         submitGame();
       }
       saveGame();
+    } else if (data.type === 'submit_check') {
+      hideLoader();
+      let finalSolution = boardSolution;
+      if (data.success && data.userSolution) {
+        finalSolution = data.userSolution;
+      }
+      processSubmission(finalSolution);
     } else if (data.type === 'error') {
       hideLoader();
       isGenerating = false;
@@ -540,6 +547,14 @@ function selectCell(idx) {
 function renderKeypad() {
   keypadEl.innerHTML = '';
   
+  // Set column count based on grid size
+  let cols = 4;
+  if (size === 9) cols = 3;
+  else if (size === 16) cols = 4;
+  else if (size === 25) cols = 5;
+  else if (size === 36) cols = 6;
+  keypadEl.style.setProperty('--keypad-cols', cols);
+  
   // Count frequencies of each number
   const counts = Array(size + 1).fill(0);
   for (let i = 0; i < boardState.length; i++) {
@@ -638,7 +653,7 @@ function togglePause() {
   }
 }
 
-function calculateScore() {
+function calculateScore(solutionBaseline) {
   let baseScore = 2000;
   switch (size) {
     case 9: baseScore = 1000; break;
@@ -667,7 +682,7 @@ function calculateScore() {
     
     totalUserFilled++;
     const userVal = boardState[i];
-    const correctVal = boardSolution[i];
+    const correctVal = solutionBaseline ? solutionBaseline[i] : boardSolution[i];
 
     if (userVal === null || userVal === undefined || userVal === "") {
       emptyCount++;
@@ -741,12 +756,20 @@ function submitGame() {
     }
   }
 
+  showLoader("Validating board solution...");
+  worker.postMessage({
+    type: 'submit_check',
+    board: boardState
+  });
+}
+
+function processSubmission(finalSolution) {
   isReviewMode = true;
   isSubmitted = true;
   selectedCell = null;
   stopTimer();
 
-  const stats = calculateScore();
+  const stats = calculateScore(finalSolution);
   
   document.getElementById('stat-score').textContent = stats.score.toLocaleString();
 
@@ -785,6 +808,8 @@ function submitGame() {
       sudokuBoardEl.classList.remove('board-solved-animate');
     }, 1000);
   }
+
+  boardSolution = finalSolution;
 
   renderBoard();
   localStorage.removeItem('gigadusoku_save_state');

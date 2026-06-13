@@ -128,7 +128,13 @@ select {
   padding-right: 30px;
 }
 
-select:hover, button:hover {
+select:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+}
+
+button:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--accent-cyan);
   box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
@@ -194,8 +200,8 @@ button.primary:hover {
   width: 100%;
   max-width: 1100px;
   justify-content: center;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  align-items: stretch;
+  flex-wrap: nowrap;
 }
 
 /* Viewport for zoom & pan */
@@ -208,8 +214,9 @@ button.primary:hover {
   border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: rgba(0, 0, 0, 0.2);
-  margin: 0 auto;
+  margin: 0;
   container-type: size;
+  flex-shrink: 1;
 }
 
 .board-viewport {
@@ -322,63 +329,57 @@ button.primary:hover {
 .sidebar {
   flex: 1;
   min-width: 320px;
-  max-width: 450px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 600px;
 }
 
-.action-buttons {
+/* Bottom Operations Panel */
+.bottom-operations-layout {
+  width: 100%;
+  max-width: 1100px;
+  margin-top: 25px;
+  padding: 15px 25px;
+}
+
+.bottom-operations-layout .action-buttons {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  width: 100%;
 }
 
-.action-buttons button {
-  flex-direction: column;
-  padding: 12px 6px;
-  font-size: 0.8rem;
-  border-radius: 10px;
+.bottom-operations-layout .action-buttons button {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
   gap: 8px;
+  border-radius: 10px;
+  height: 48px;
 }
 
-.action-buttons button svg {
-  width: 20px;
-  height: 20px;
+.bottom-operations-layout .action-buttons button svg {
+  width: 18px;
+  height: 18px;
 }
 
-.action-buttons button.active {
+.bottom-operations-layout .action-buttons button.active {
   background: rgba(168, 85, 247, 0.2);
   border-color: var(--accent-purple);
   box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
   color: var(--accent-purple);
 }
 
-/* Zoom Controls UI */
-.zoom-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 15px;
-}
-
-.zoom-btn-group {
-  display: flex;
-  gap: 6px;
-}
-
-.zoom-btn-group button {
-  padding: 6px 12px;
-}
-
 /* Keypad Section */
 .keypad-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 15px;
+  padding: 12px;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -387,31 +388,39 @@ button.primary:hover {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
+  padding: 0 4px;
 }
 
 .keypad-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+  grid-template-columns: repeat(var(--keypad-cols, 5), 1fr);
   gap: 8px;
   overflow-y: auto;
-  max-height: 250px;
+  max-height: none;
+  flex: 1;
   padding-right: 4px;
 }
 
 .keypad-grid::-webkit-scrollbar {
   width: 6px;
 }
+.keypad-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
 .keypad-grid::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  border-radius: 9999px;
+}
+.keypad-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .keypad-btn {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-main);
   aspect-ratio: 1;
   display: flex;
@@ -419,29 +428,57 @@ button.primary:hover {
   justify-content: center;
   align-items: center;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  font-size: 1.15rem;
+  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 1px 3px -1px rgba(0, 0, 0, 0.1);
+}
+
+.keypad-btn div {
+  transform: translateY(-3px);
 }
 
 .keypad-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(168, 85, 247, 0.15));
   border-color: var(--accent-cyan);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px -2px rgba(0, 242, 254, 0.3);
+}
+
+.keypad-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px -1px rgba(0, 0, 0, 0.2);
 }
 
 .keypad-btn.completed {
-  opacity: 0.3;
-  pointer-events: none;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: var(--accent-green) !important;
+  opacity: 0.85;
+  transform: none;
+  box-shadow: none;
+  cursor: default;
 }
 
 .keypad-btn .count-badge {
   position: absolute;
   bottom: 2px;
-  font-size: 0.6rem;
-  font-weight: 400;
+  font-size: 0.55rem;
+  font-weight: 600;
   color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 4px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  line-height: 1;
+}
+
+.keypad-btn.completed .count-badge {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: var(--accent-green) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
 }
 
 /* Modal Styling */
@@ -553,18 +590,21 @@ button.primary:hover {
 }
 
 /* Media Queries */
-@media (max-width: 1000px) {
+@media (max-width: 768px) {
   .main-game-layout {
     flex-direction: column;
     align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
   }
   .sidebar {
-    width: 600px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 600px;
     height: auto;
   }
   .keypad-grid {
-    max-height: 150px;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    max-height: 250px;
   }
 }
 
@@ -706,19 +746,42 @@ body.light-theme .sudoku-cell.user-filled {
 }
 
 body.light-theme .keypad-btn {
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 body.light-theme .keypad-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.1), rgba(124, 58, 237, 0.1));
   border-color: #0284c7;
+  box-shadow: 0 4px 8px rgba(2, 132, 199, 0.2);
 }
 
 body.light-theme .keypad-btn.completed {
-  background: rgba(0, 0, 0, 0.08);
-  opacity: 0.35;
+  background: rgba(5, 150, 105, 0.1) !important;
+  border-color: rgba(5, 150, 105, 0.3) !important;
+  color: #059669 !important;
+  opacity: 0.85;
+}
+
+body.light-theme .keypad-btn .count-badge {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.05);
+  color: #475569;
+}
+
+body.light-theme .keypad-btn.completed .count-badge {
+  background: rgba(5, 150, 105, 0.15) !important;
+  color: #059669 !important;
+  border-color: rgba(5, 150, 105, 0.2) !important;
+}
+
+body.light-theme .keypad-grid::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+body.light-theme .keypad-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 body.light-theme select, body.light-theme button {
