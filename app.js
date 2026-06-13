@@ -18,6 +18,7 @@ let historyStack = [];
 let redoStack = [];
 let errorIndices = new Set();
 let isGenerating = false;
+let isReviewMode = false;
 
 // Zoom and Pan State
 let zoom = 1.0;
@@ -48,6 +49,7 @@ const undoBtn = document.getElementById('undo-btn');
 const redoBtn = document.getElementById('redo-btn');
 const hintBtn = document.getElementById('hint-btn');
 const solveBtn = document.getElementById('solve-btn');
+const submitBtn = document.getElementById('submit-btn');
 const clearBtn = document.getElementById('clear-btn');
 const helpBtn = document.getElementById('help-btn');
 
@@ -214,6 +216,15 @@ function generateNewGame() {
   isGenerating = true;
   showLoader("Generating board...");
   
+  isReviewMode = false;
+  if (submitBtn) {
+    submitBtn.style.background = 'linear-gradient(135deg, var(--accent-green), #065f46)';
+    const span = submitBtn.querySelector('span');
+    if (span) span.textContent = "Submit Board";
+    const svg = submitBtn.querySelector('svg');
+    if (svg) svg.innerHTML = `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`;
+  }
+  
   size = parseInt(sizeSelect.value, 10);
   difficulty = diffSelect.value;
   symbolMode = symbolModeSelect.value;
@@ -237,6 +248,7 @@ function generateNewGame() {
 }
 
 function solveGame() {
+  if (isReviewMode) return;
   if (confirm("Are you sure you want to solve the entire board? This will reveal the solution.")) {
     showLoader("Solving board...");
     worker.postMessage({
@@ -254,6 +266,7 @@ function checkValidation() {
 }
 
 function showHint() {
+  if (isReviewMode) return;
   if (selectedCell === null) {
     alert("Please select a cell first to receive a hint!");
     return;
@@ -271,6 +284,7 @@ function showHint() {
 }
 
 function clearSelectedCell() {
+  if (isReviewMode) return;
   if (selectedCell === null || givenIndices.has(selectedCell)) return;
   pushHistory();
   boardState[selectedCell] = null;
@@ -281,6 +295,7 @@ function clearSelectedCell() {
 }
 
 function fillCell(index, value) {
+  if (isReviewMode) return;
   if (givenIndices.has(index)) return;
 
   if (notesMode) {
@@ -342,6 +357,7 @@ function pushHistory() {
 }
 
 function undo() {
+  if (isReviewMode) return;
   if (historyStack.length === 0) return;
   
   // Push current to redo
@@ -360,6 +376,7 @@ function undo() {
 }
 
 function redo() {
+  if (isReviewMode) return;
   if (redoStack.length === 0) return;
 
   // Push current to undo
@@ -408,6 +425,40 @@ function renderBoard() {
       if (givenIndices.has(idx)) {
         cellEl.classList.add('given');
         cellEl.textContent = getSymbol(cellVal, size, symbolMode);
+      } else if (isReviewMode) {
+        const correctVal = boardSolution[idx];
+        if (cellVal === correctVal) {
+          cellEl.classList.add('review-correct');
+          cellEl.textContent = getSymbol(cellVal, size, symbolMode);
+        } else {
+          cellEl.classList.add('review-incorrect');
+          const container = document.createElement('div');
+          container.classList.add('review-incorrect-container');
+          
+          if (cellVal !== null && cellVal !== undefined && cellVal !== "") {
+            const userValEl = document.createElement('span');
+            userValEl.classList.add('review-user-val');
+            userValEl.textContent = getSymbol(cellVal, size, symbolMode);
+            
+            const arrowEl = document.createElement('span');
+            arrowEl.classList.add('review-arrow');
+            arrowEl.innerHTML = '&darr;';
+            
+            const correctValEl = document.createElement('span');
+            correctValEl.classList.add('review-correct-val');
+            correctValEl.textContent = getSymbol(correctVal, size, symbolMode);
+            
+            container.appendChild(userValEl);
+            container.appendChild(arrowEl);
+            container.appendChild(correctValEl);
+          } else {
+            const emptyCorrectEl = document.createElement('span');
+            emptyCorrectEl.classList.add('review-empty-correct');
+            emptyCorrectEl.textContent = getSymbol(correctVal, size, symbolMode);
+            container.appendChild(emptyCorrectEl);
+          }
+          cellEl.appendChild(container);
+        }
       } else if (cellVal) {
         cellEl.classList.add('user-filled');
         cellEl.textContent = getSymbol(cellVal, size, symbolMode);
@@ -471,7 +522,7 @@ function renderBoard() {
 }
 
 function selectCell(idx) {
-  if (isPaused) return;
+  if (isPaused || isReviewMode) return;
   selectedCell = idx;
   renderBoard();
 }
@@ -700,6 +751,42 @@ function togglePause() {
   }
 }
 
+function toggleReviewMode() {
+  if (isReviewMode) {
+    isReviewMode = false;
+    submitBtn.style.background = 'linear-gradient(135deg, var(--accent-green), #065f46)';
+    const span = submitBtn.querySelector('span');
+    if (span) span.textContent = "Submit Board";
+    const svg = submitBtn.querySelector('svg');
+    if (svg) svg.innerHTML = `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`;
+    startTimer();
+    renderBoard();
+  } else {
+    let emptyCells = 0;
+    for (let i = 0; i < boardState.length; i++) {
+      if (boardState[i] === null || boardState[i] === undefined || boardState[i] === "") {
+        emptyCells++;
+      }
+    }
+
+    if (emptyCells > 0) {
+      if (!confirm(`There are still ${emptyCells} empty cells. Do you want to submit anyway and check for errors?`)) {
+        return;
+      }
+    }
+
+    isReviewMode = true;
+    selectedCell = null;
+    stopTimer();
+    submitBtn.style.background = 'linear-gradient(135deg, var(--accent-purple), #581c87)';
+    const span = submitBtn.querySelector('span');
+    if (span) span.textContent = "Resume Game";
+    const svg = submitBtn.querySelector('svg');
+    if (svg) svg.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+    renderBoard();
+  }
+}
+
 function showLoader(message) {
   loaderText.textContent = message;
   boardLoader.classList.add('active');
@@ -805,7 +892,7 @@ function loadSavedGame() {
 // --- Keyboard Event Handlers ---
 
 window.addEventListener('keydown', (e) => {
-  if (selectedCell === null || isPaused) return;
+  if (selectedCell === null || isPaused || isReviewMode) return;
 
   const key = e.key;
 
@@ -888,7 +975,7 @@ redoBtn.addEventListener('click', redo);
 clearBtn.addEventListener('click', clearSelectedCell);
 hintBtn.addEventListener('click', showHint);
 solveBtn.addEventListener('click', solveGame);
-
+submitBtn.addEventListener('click', toggleReviewMode);
 pauseBtn.addEventListener('click', togglePause);
 resumeBtn.addEventListener('click', togglePause);
 
