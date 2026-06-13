@@ -19,6 +19,8 @@ let redoStack = [];
 let errorIndices = new Set();
 let isGenerating = false;
 let isReviewMode = false;
+let isSubmitted = false;
+let hintsUsed = 0;
 let theme = 'dark';
 
 // Zoom and Pan State
@@ -58,10 +60,10 @@ const themeIcon = document.getElementById('theme-icon');
 
 // Modals
 const helpModal = document.getElementById('help-modal');
-const winModal = document.getElementById('win-modal');
+const resultModal = document.getElementById('result-modal');
 const pauseModal = document.getElementById('pause-modal');
 const helpCloseBtn = document.getElementById('help-close-btn');
-const winCloseBtn = document.getElementById('win-close-btn');
+const resultCloseBtn = document.getElementById('result-close-btn');
 const resumeBtn = document.getElementById('resume-btn');
 const boardLoader = document.getElementById('board-loader');
 const loaderText = document.getElementById('loader-text');
@@ -165,7 +167,6 @@ function initWorker() {
       hideLoader();
       isGenerating = false;
       renderBoard();
-      resetZoomPan();
       updateProgress();
       resetTimer();
       startTimer();
@@ -201,7 +202,7 @@ function initWorker() {
       });
 
       if (data.isComplete && data.isValid) {
-        triggerWin();
+        submitGame();
       }
       saveGame();
     } else if (data.type === 'error') {
@@ -220,6 +221,10 @@ function generateNewGame() {
   showLoader("Generating board...");
   
   isReviewMode = false;
+  isSubmitted = false;
+  hintsUsed = 0;
+  document.getElementById('stat-score').textContent = "0";
+
   if (submitBtn) {
     submitBtn.style.background = 'linear-gradient(135deg, var(--accent-green), #065f46)';
     const span = submitBtn.querySelector('span');
@@ -281,6 +286,7 @@ function showHint() {
   const correctVal = boardSolution[selectedCell];
   if (correctVal) {
     pushHistory();
+    hintsUsed++;
     fillCell(selectedCell, correctVal);
     checkValidation();
   }
@@ -580,130 +586,7 @@ function updateProgress() {
   progressEl.textContent = `${filled} / ${size * size}`;
 }
 
-// --- Zoom & Pan Logic ---
-
-function setZoomPan() {
-  // Clamp boundaries for zoom
-  zoom = Math.max(0.4, Math.min(zoom, 3.0));
-  
-  // Constrain panning to keep board in viewport
-  const viewportRect = boardViewport.getBoundingClientRect();
-  const boardSize = 600 * zoom;
-  
-  const minPanX = -boardSize + 100;
-  const maxPanX = viewportRect.width - 100;
-  const minPanY = -boardSize + 100;
-  const maxPanY = viewportRect.height - 100;
-
-  panX = Math.max(minPanX, Math.min(panX, maxPanX));
-  panY = Math.max(minPanY, Math.min(panY, maxPanY));
-
-  // Set CSS Variables
-  sudokuBoardEl.style.setProperty('--zoom', zoom);
-  sudokuBoardEl.style.setProperty('--pan-x', `${panX}px`);
-  sudokuBoardEl.style.setProperty('--pan-y', `${panY}px`);
-}
-
-function resetZoomPan() {
-  // Center board inside the viewport wrapper
-  const containerRect = boardViewport.getBoundingClientRect();
-  const width = containerRect.width || 600;
-  
-  // Fit 25x25 and 36x36 initially
-  if (size === 25) {
-    zoom = width / 600;
-  } else if (size === 36) {
-    zoom = width / 600;
-  } else {
-    zoom = 1.0;
-  }
-  
-  panX = 0;
-  panY = 0;
-  setZoomPan();
-}
-
-// Wheel zoom relative to cursor position
-boardViewport.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  
-  const rect = boardViewport.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-
-  // Mouse coords relative to board origin before zoom
-  const boardX = (mouseX - panX) / zoom;
-  const boardY = (mouseY - panY) / zoom;
-
-  const zoomFactor = 1.1;
-  if (e.deltaY < 0) {
-    zoom *= zoomFactor;
-  } else {
-    zoom /= zoomFactor;
-  }
-
-  // Adjust pans so mouse coordinate is preserved
-  zoom = Math.max(0.4, Math.min(zoom, 3.0));
-  panX = mouseX - boardX * zoom;
-  panY = mouseY - boardY * zoom;
-
-  setZoomPan();
-}, { passive: false });
-
-// Pan drag start
-boardViewport.addEventListener('mousedown', (e) => {
-  if (e.target.classList.contains('sudoku-cell') || e.target.closest('.notes-container')) {
-    // Allow cellular clicking without panning trigger unless they drag
-  }
-  isPanning = true;
-  startPanX = e.clientX - panX;
-  startPanY = e.clientY - panY;
-});
-
-window.addEventListener('mousemove', (e) => {
-  if (!isPanning) return;
-  panX = e.clientX - startPanX;
-  panY = e.clientY - startPanY;
-  setZoomPan();
-});
-
-window.addEventListener('mouseup', () => {
-  isPanning = false;
-});
-
-// Touch controls for mobile devices
-boardViewport.addEventListener('touchstart', (e) => {
-  if (e.touches.length === 1) {
-    isPanning = true;
-    startPanX = e.touches[0].clientX - panX;
-    startPanY = e.touches[0].clientY - panY;
-  }
-});
-
-boardViewport.addEventListener('touchmove', (e) => {
-  if (!isPanning || e.touches.length !== 1) return;
-  panX = e.touches[0].clientX - startPanX;
-  panY = e.touches[0].clientY - startPanY;
-  setZoomPan();
-});
-
-boardViewport.addEventListener('touchend', () => {
-  isPanning = false;
-});
-
-// Zoom helper events
-document.getElementById('zoom-in-btn').addEventListener('click', () => {
-  zoom *= 1.2;
-  setZoomPan();
-});
-document.getElementById('zoom-out-btn').addEventListener('click', () => {
-  zoom /= 1.2;
-  setZoomPan();
-});
-document.getElementById('zoom-reset-btn').addEventListener('click', () => {
-  resetZoomPan();
-});
-boardViewport.addEventListener('dblclick', resetZoomPan);
+// --- Zoom & Pan Removed (Board is now Static and Responsive) ---
 
 // --- Timer & UI States ---
 
@@ -754,40 +637,156 @@ function togglePause() {
   }
 }
 
-function toggleReviewMode() {
-  if (isReviewMode) {
-    isReviewMode = false;
-    submitBtn.style.background = 'linear-gradient(135deg, var(--accent-green), #065f46)';
-    const span = submitBtn.querySelector('span');
-    if (span) span.textContent = "Submit Board";
-    const svg = submitBtn.querySelector('svg');
-    if (svg) svg.innerHTML = `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`;
-    startTimer();
-    renderBoard();
-  } else {
-    let emptyCells = 0;
-    for (let i = 0; i < boardState.length; i++) {
-      if (boardState[i] === null || boardState[i] === undefined || boardState[i] === "") {
-        emptyCells++;
-      }
-    }
-
-    if (emptyCells > 0) {
-      if (!confirm(`There are still ${emptyCells} empty cells. Do you want to submit anyway and check for errors?`)) {
-        return;
-      }
-    }
-
-    isReviewMode = true;
-    selectedCell = null;
-    stopTimer();
-    submitBtn.style.background = 'linear-gradient(135deg, var(--accent-purple), #581c87)';
-    const span = submitBtn.querySelector('span');
-    if (span) span.textContent = "Resume Game";
-    const svg = submitBtn.querySelector('svg');
-    if (svg) svg.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
-    renderBoard();
+function calculateScore() {
+  let baseScore = 2000;
+  switch (size) {
+    case 9: baseScore = 1000; break;
+    case 16: baseScore = 5000; break;
+    case 25: baseScore = 15000; break;
+    case 36: baseScore = 30000; break;
   }
+
+  let diffMultiplier = 1.0;
+  switch (difficulty) {
+    case 'easy': diffMultiplier = 0.5; break;
+    case 'medium': diffMultiplier = 1.0; break;
+    case 'hard': diffMultiplier = 1.5; break;
+    case 'expert': diffMultiplier = 2.0; break;
+  }
+  
+  let targetBase = baseScore * diffMultiplier;
+
+  let wrongCount = 0;
+  let emptyCount = 0;
+  let correctCount = 0;
+  let totalUserFilled = 0;
+
+  for (let i = 0; i < boardState.length; i++) {
+    if (givenIndices.has(i)) continue;
+    
+    totalUserFilled++;
+    const userVal = boardState[i];
+    const correctVal = boardSolution[i];
+
+    if (userVal === null || userVal === undefined || userVal === "") {
+      emptyCount++;
+    } else if (userVal !== correctVal) {
+      wrongCount++;
+    } else {
+      correctCount++;
+    }
+  }
+
+  let wrongPenalty = 0;
+  let hintPenalty = 0;
+  let timeDecay = 0;
+
+  switch (size) {
+    case 9:
+      wrongPenalty = 50;
+      hintPenalty = 150;
+      timeDecay = 0.5;
+      break;
+    case 16:
+      wrongPenalty = 150;
+      hintPenalty = 400;
+      timeDecay = 1.0;
+      break;
+    case 25:
+      wrongPenalty = 300;
+      hintPenalty = 800;
+      timeDecay = 2.0;
+      break;
+    case 36:
+      wrongPenalty = 500;
+      hintPenalty = 1500;
+      timeDecay = 3.0;
+      break;
+  }
+
+  const wrongDeduction = wrongCount * wrongPenalty;
+  const hintDeduction = hintsUsed * hintPenalty;
+  const timeDeduction = Math.floor(timerSeconds * timeDecay);
+
+  const finalScore = Math.max(0, Math.floor(targetBase - wrongDeduction - hintDeduction - timeDeduction));
+  const accuracy = totalUserFilled > 0 ? Math.round((correctCount / totalUserFilled) * 100) : 0;
+
+  return {
+    score: finalScore,
+    accuracy,
+    correctCount,
+    totalUserFilled,
+    wrongCount,
+    emptyCount
+  };
+}
+
+function submitGame() {
+  if (isSubmitted) {
+    generateNewGame();
+    return;
+  }
+
+  let emptyCells = 0;
+  for (let i = 0; i < boardState.length; i++) {
+    if (boardState[i] === null || boardState[i] === undefined || boardState[i] === "") {
+      emptyCells++;
+    }
+  }
+
+  if (emptyCells > 0) {
+    if (!confirm(`There are still ${emptyCells} empty cells. Do you want to submit anyway and lock your score?`)) {
+      return;
+    }
+  }
+
+  isReviewMode = true;
+  isSubmitted = true;
+  selectedCell = null;
+  stopTimer();
+
+  const stats = calculateScore();
+  
+  document.getElementById('stat-score').textContent = stats.score.toLocaleString();
+
+  submitBtn.style.background = 'linear-gradient(135deg, var(--accent-purple), var(--accent-cyan))';
+  const span = submitBtn.querySelector('span');
+  if (span) span.textContent = "Start New Game";
+  const svg = submitBtn.querySelector('svg');
+  if (svg) svg.innerHTML = `<path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>`;
+
+  document.getElementById('result-grid-size').textContent = `${size}x${size}`;
+  document.getElementById('result-difficulty').textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  
+  const hrs = Math.floor(timerSeconds / 3600);
+  const mins = Math.floor((timerSeconds % 3600) / 60);
+  const secs = timerSeconds % 60;
+  document.getElementById('result-time').textContent = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m ${secs}s`;
+  
+  document.getElementById('result-hints').textContent = hintsUsed;
+  document.getElementById('result-accuracy').textContent = `${stats.accuracy}% (${stats.correctCount}/${stats.totalUserFilled} correct)`;
+  document.getElementById('result-score').textContent = stats.score.toLocaleString();
+
+  const resultTitleEl = document.getElementById('result-title');
+  if (stats.wrongCount === 0 && stats.emptyCount === 0) {
+    resultTitleEl.textContent = "Perfect Solution!";
+    resultTitleEl.style.color = "var(--accent-green)";
+  } else {
+    resultTitleEl.textContent = "Submission Finished";
+    resultTitleEl.style.color = "var(--accent-yellow)";
+  }
+
+  resultModal.classList.add('active');
+
+  if (stats.wrongCount === 0 && stats.emptyCount === 0) {
+    sudokuBoardEl.classList.add('board-solved-animate');
+    setTimeout(() => {
+      sudokuBoardEl.classList.remove('board-solved-animate');
+    }, 1000);
+  }
+
+  renderBoard();
+  localStorage.removeItem('gigadusoku_save_state');
 }
 
 function showLoader(message) {
@@ -801,29 +800,7 @@ function hideLoader() {
 
 // --- Winning Ceremony ---
 
-function triggerWin() {
-  stopTimer();
-  
-  // Set modal texts
-  document.getElementById('win-grid-size').textContent = `${size}x${size}`;
-  document.getElementById('win-difficulty').textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-  
-  const hrs = Math.floor(timerSeconds / 3600);
-  const mins = Math.floor((timerSeconds % 3600) / 60);
-  const secs = timerSeconds % 60;
-  document.getElementById('win-time').textContent = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m ${secs}s`;
-
-  winModal.classList.add('active');
-  
-  // Add animation to the board
-  sudokuBoardEl.classList.add('board-solved-animate');
-  setTimeout(() => {
-    sudokuBoardEl.classList.remove('board-solved-animate');
-  }, 1000);
-
-  // Clear save state
-  localStorage.removeItem('gigadusoku_save_state');
-}
+// triggerWin combined with submitGame
 
 // --- Local Storage Persistence ---
 
@@ -840,7 +817,9 @@ function saveGame() {
     boardNotes,
     givenIndices: Array.from(givenIndices),
     timerSeconds,
-    errorIndices: Array.from(errorIndices)
+    errorIndices: Array.from(errorIndices),
+    hintsUsed,
+    isSubmitted
   };
   localStorage.setItem('gigadusoku_save_state', JSON.stringify(state));
 }
@@ -863,6 +842,8 @@ function loadSavedGame() {
     givenIndices = new Set(state.givenIndices);
     timerSeconds = state.timerSeconds;
     errorIndices = new Set(state.errorIndices || []);
+    hintsUsed = state.hintsUsed || 0;
+    isSubmitted = state.isSubmitted || false;
 
     // Set UI dropdown selections
     sizeSelect.value = size;
@@ -877,13 +858,26 @@ function loadSavedGame() {
     
     initWorker();
     
+    // If it was already submitted, lock UI and display score
+    if (isSubmitted) {
+      isReviewMode = true;
+      const stats = calculateScore();
+      document.getElementById('stat-score').textContent = stats.score.toLocaleString();
+      if (submitBtn) {
+        submitBtn.style.background = 'linear-gradient(135deg, var(--accent-purple), var(--accent-cyan))';
+        const span = submitBtn.querySelector('span');
+        if (span) span.textContent = "Start New Game";
+        const svg = submitBtn.querySelector('svg');
+        if (svg) svg.innerHTML = `<path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>`;
+      }
+    }
+    
     renderBoard();
     updateProgress();
     updateTimerUI();
-    startTimer();
-    
-    // Reset view
-    setTimeout(resetZoomPan, 100);
+    if (!isSubmitted) {
+      startTimer();
+    }
 
     return true;
   } catch (err) {
@@ -979,7 +973,7 @@ redoBtn.addEventListener('click', redo);
 clearBtn.addEventListener('click', clearSelectedCell);
 hintBtn.addEventListener('click', showHint);
 solveBtn.addEventListener('click', solveGame);
-submitBtn.addEventListener('click', toggleReviewMode);
+submitBtn.addEventListener('click', submitGame);
 pauseBtn.addEventListener('click', togglePause);
 resumeBtn.addEventListener('click', togglePause);
 
@@ -989,8 +983,8 @@ helpBtn.addEventListener('click', () => {
 helpCloseBtn.addEventListener('click', () => {
   helpModal.classList.remove('active');
 });
-winCloseBtn.addEventListener('click', () => {
-  winModal.classList.remove('active');
+resultCloseBtn.addEventListener('click', () => {
+  resultModal.classList.remove('active');
   generateNewGame();
 });
 

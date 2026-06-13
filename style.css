@@ -199,12 +199,15 @@ button.primary:hover {
 /* Viewport for zoom & pan */
 .board-viewport-container {
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 1;
   overflow: hidden;
   border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: rgba(0, 0, 0, 0.2);
+  margin: 0 auto;
+  container-type: size;
 }
 
 .board-viewport {
@@ -212,24 +215,17 @@ button.primary:hover {
   height: 100%;
   overflow: hidden;
   position: relative;
-  cursor: grab;
-}
-
-.board-viewport:active {
-  cursor: grabbing;
+  cursor: default;
 }
 
 /* Sudoku Board Grid */
 .sudoku-board {
   display: grid;
   grid-template-columns: repeat(var(--grid-size), 1fr);
-  width: 600px;
-  height: 600px;
+  width: 100%;
+  height: 100%;
   background: rgba(255, 255, 255, 0.01);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-  transform-origin: 0 0;
-  transform: translate(var(--pan-x), var(--pan-y)) scale(var(--zoom));
-  transition: transform 0.05s ease-out;
 }
 
 /* Cells */
@@ -240,7 +236,7 @@ button.primary:hover {
   justify-content: center;
   background: transparent;
   color: var(--text-main);
-  font-size: calc(280px / var(--grid-size));
+  font-size: calc(52cqi / var(--grid-size));
   font-weight: 500;
   border: 1px solid rgba(255, 255, 255, 0.03);
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
@@ -308,8 +304,8 @@ button.primary:hover {
   height: 100%;
   padding: 2px;
   pointer-events: none;
-  font-size: calc(85px / var(--grid-size));
-  line-height: 1;
+  font-size: calc(15cqi / var(--grid-size));
+  line-height: 1.1;
   color: var(--accent-purple);
   opacity: 0.85;
 }
@@ -624,6 +620,7 @@ button.primary:hover {
   line-height: 1.1;
   width: 100%;
   height: 100%;
+  font-size: calc(30cqi / var(--grid-size));
 }
 
 .review-user-val {

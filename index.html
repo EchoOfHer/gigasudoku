@@ -67,6 +67,10 @@
         <div class="stat-label">Progress</div>
         <div id="stat-progress" class="stat-value">0 / 625</div>
       </div>
+      <div class="stat-item">
+        <div class="stat-label">Score</div>
+        <div id="stat-score" class="stat-value" style="color: var(--accent-green);">0</div>
+      </div>
     </div>
 
     <!-- Timer Control -->
@@ -135,16 +139,6 @@
         </button>
       </div>
 
-      <!-- Zoom / Viewport Navigation Controls -->
-      <div class="glass-container zoom-controls">
-        <div class="stat-label">Navigation & Zoom</div>
-        <div class="zoom-btn-group">
-          <button id="zoom-in-btn" title="Zoom In">+</button>
-          <button id="zoom-out-btn" title="Zoom Out">-</button>
-          <button id="zoom-reset-btn" title="Reset view">100%</button>
-        </div>
-      </div>
-
       <!-- Dynamic Virtual Keypad -->
       <div class="glass-container keypad-container">
         <div class="keypad-title">
@@ -169,9 +163,9 @@
         <p><strong>Controls:</strong></p>
         <ul style="padding-left: 20px;">
           <li><strong>Select a cell</strong>: Click or tap any cell on the board.</li>
-          <li><strong>Zoom & Pan</strong>: Scroll your mouse wheel or pinch to zoom. Click and drag the board to pan around. Highly recommended for 25x25 and 36x36!</li>
           <li><strong>Keyboard</strong>: Use Arrow keys to navigate. Type numbers or letters to input. Press <strong>N</strong> to toggle Notes. Press <strong>Backspace / Delete</strong> to clear.</li>
           <li><strong>Virtual Pad</strong>: Click on buttons in the virtual pad to input symbols. The count badge shows how many times that symbol has been placed.</li>
+          <li><strong>Submit</strong>: When you are done (or want to check your progress), click <strong>Submit Board</strong>. You will receive your final score and accuracy, and you can inspect your incorrect entries. Once submitted, the board is locked and you must start a new game!</li>
         </ul>
       </div>
       <div class="modal-footer">
@@ -180,20 +174,26 @@
     </div>
   </div>
 
-  <!-- WIN MODAL -->
-  <div id="win-modal" class="modal">
+  <!-- RESULT MODAL -->
+  <div id="result-modal" class="modal">
     <div class="modal-content glass-container" style="text-align: center;">
-      <div class="modal-title" style="color: var(--accent-green); font-size: 2rem;">Congratulations!</div>
+      <div id="result-title" class="modal-title" style="font-size: 1.8rem; font-weight: 700; color: var(--accent-green);">Submission Result</div>
       <div class="modal-body">
-        <p>You have successfully solved the puzzle!</p>
-        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin: 10px 0; display: flex; flex-direction: column; gap: 8px;">
-          <div><strong>Grid Size:</strong> <span id="win-grid-size">-</span></div>
-          <div><strong>Difficulty:</strong> <span id="win-difficulty">-</span></div>
-          <div><strong>Time Spent:</strong> <span id="win-time">-</span></div>
+        <p id="result-message">Here is your performance summary:</p>
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; text-align: left;">
+          <div><strong>Grid Size:</strong> <span id="result-grid-size">-</span></div>
+          <div><strong>Difficulty:</strong> <span id="result-difficulty">-</span></div>
+          <div><strong>Time Spent:</strong> <span id="result-time">-</span></div>
+          <div><strong>Hints Used:</strong> <span id="result-hints">-</span></div>
+          <div><strong>Accuracy:</strong> <span id="result-accuracy">-</span></div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; font-size: 1.2rem; display: flex; justify-content: space-between;">
+            <strong>Final Score:</strong> <span id="result-score" style="color: var(--accent-cyan); font-weight: 700;">0</span>
+          </div>
         </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">Note: Since you submitted, this board is locked. You can inspect your errors on the board or start a new game.</p>
       </div>
       <div class="modal-footer" style="justify-content: center;">
-        <button id="win-close-btn" class="primary">Play Again</button>
+        <button id="result-close-btn" class="primary" style="padding: 10px 30px;">Start New Game</button>
       </div>
     </div>
   </div>
