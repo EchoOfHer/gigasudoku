@@ -1,0 +1,604 @@
+/* Custom CSS for Sudoku Game */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap');
+
+:root {
+  --bg-gradient: radial-gradient(circle at 50% 50%, #1e1b30, #0c0a17);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-glow: rgba(168, 85, 247, 0.3);
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  
+  --accent-cyan: #00f2fe;
+  --accent-purple: #a855f7;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --accent-yellow: #f59e0b;
+  
+  /* Highlight Colors */
+  --highlight-selected: rgba(0, 242, 254, 0.15);
+  --highlight-peer: rgba(168, 85, 247, 0.08);
+  --highlight-same-val: rgba(16, 185, 129, 0.15);
+  --highlight-error: rgba(239, 68, 68, 0.2);
+  
+  /* Layout Variables (Driven by JS) */
+  --grid-size: 9;
+  --zoom: 1;
+  --pan-x: 0px;
+  --pan-y: 0px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-gradient);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+/* Glass Container base */
+.glass-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s ease;
+}
+
+.glass-container:hover {
+  border-color: var(--glass-border-glow);
+  box-shadow: 0 8px 32px 0 rgba(168, 85, 247, 0.1);
+}
+
+header {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  background: linear-gradient(to right, var(--accent-cyan), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h1 span {
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-purple);
+  -webkit-text-fill-color: var(--accent-purple);
+  font-weight: 600;
+}
+
+.controls-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+select, button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 18px;
+  padding-right: 30px;
+}
+
+select:hover, button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+}
+
+button.primary {
+  background: linear-gradient(135deg, var(--accent-purple), #7c2d12);
+  background-size: 200% auto;
+  border: none;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background-position: right center;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+
+/* Dashboard Info Area */
+.dashboard {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+}
+
+.stats-group {
+  display: flex;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.stat-value.timer {
+  font-family: 'Orbitron', monospace;
+  color: var(--accent-cyan);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Main Layout: Game Area & Controls Sidebar */
+.main-game-layout {
+  display: flex;
+  gap: 25px;
+  width: 100%;
+  max-width: 1100px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* Viewport for zoom & pan */
+.board-viewport-container {
+  position: relative;
+  width: 600px;
+  height: 600px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.board-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+}
+
+.board-viewport:active {
+  cursor: grabbing;
+}
+
+/* Sudoku Board Grid */
+.sudoku-board {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-size), 1fr);
+  width: 600px;
+  height: 600px;
+  background: rgba(255, 255, 255, 0.01);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  transform-origin: 0 0;
+  transform: translate(var(--pan-x), var(--pan-y)) scale(var(--zoom));
+  transition: transform 0.05s ease-out;
+}
+
+/* Cells */
+.sudoku-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-main);
+  font-size: calc(280px / var(--grid-size));
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  aspect-ratio: 1;
+}
+
+/* Thick borders for Subgrids */
+.sudoku-cell.border-left {
+  border-left: 2px solid rgba(255, 255, 255, 0.25);
+}
+.sudoku-cell.border-right {
+  border-right: 2px solid rgba(255, 255, 255, 0.25);
+}
+.sudoku-cell.border-top {
+  border-top: 2px solid rgba(255, 255, 255, 0.25);
+}
+.sudoku-cell.border-bottom {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Hard outlines for the outer borders */
+.sudoku-cell.outer-left { border-left: 3px solid rgba(255, 255, 255, 0.4); }
+.sudoku-cell.outer-right { border-right: 3px solid rgba(255, 255, 255, 0.4); }
+.sudoku-cell.outer-top { border-top: 3px solid rgba(255, 255, 255, 0.4); }
+.sudoku-cell.outer-bottom { border-bottom: 3px solid rgba(255, 255, 255, 0.4); }
+
+/* Cell States */
+.sudoku-cell.given {
+  color: var(--text-muted);
+  font-weight: 400;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.sudoku-cell.user-filled {
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+.sudoku-cell.selected {
+  background-color: var(--highlight-selected) !important;
+  box-shadow: inset 0 0 0 2px var(--accent-cyan);
+  z-index: 5;
+}
+
+.sudoku-cell.peer-highlight {
+  background-color: var(--highlight-peer);
+}
+
+.sudoku-cell.same-value {
+  background-color: var(--highlight-same-val);
+}
+
+.sudoku-cell.error {
+  color: #ff3333;
+  background-color: var(--highlight-error) !important;
+  animation: pulse-red 1.5s infinite;
+}
+
+/* Pencil Marks / Notes styling */
+.notes-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  pointer-events: none;
+  font-size: calc(85px / var(--grid-size));
+  line-height: 1;
+  color: var(--accent-purple);
+  opacity: 0.85;
+}
+
+.note-item {
+  width: calc(100% / Math.sqrt(var(--grid-size)));
+  text-align: center;
+  display: inline-block;
+}
+
+/* Control Controls Panel & Sidebar */
+.sidebar {
+  flex: 1;
+  min-width: 320px;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 600px;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 15px;
+}
+
+.action-buttons button {
+  flex-direction: column;
+  padding: 12px 6px;
+  font-size: 0.8rem;
+  border-radius: 10px;
+  gap: 8px;
+}
+
+.action-buttons button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.action-buttons button.active {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+  color: var(--accent-purple);
+}
+
+/* Zoom Controls UI */
+.zoom-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+}
+
+.zoom-btn-group {
+  display: flex;
+  gap: 6px;
+}
+
+.zoom-btn-group button {
+  padding: 6px 12px;
+}
+
+/* Keypad Section */
+.keypad-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  overflow: hidden;
+}
+
+.keypad-title {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 250px;
+  padding-right: 4px;
+}
+
+.keypad-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.keypad-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.keypad-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.keypad-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-cyan);
+}
+
+.keypad-btn.completed {
+  opacity: 0.3;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.keypad-btn .count-badge {
+  position: absolute;
+  bottom: 2px;
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* Modal Styling */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 8, 20, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.modal-body {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Animations */
+@keyframes pulse-red {
+  0% { box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: inset 0 0 0 3px rgba(239, 68, 68, 0.8); }
+  100% { box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.3); }
+}
+
+@keyframes board-solve-success {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); filter: brightness(1.2); }
+  100% { transform: scale(1); }
+}
+
+.board-solved-animate {
+  animation: board-solve-success 0.8s ease;
+}
+
+/* Loading Spinner overlaid on Board */
+.board-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 8, 20, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.board-loader.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Media Queries */
+@media (max-width: 1000px) {
+  .main-game-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+  .sidebar {
+    width: 600px;
+    max-width: 100%;
+    height: auto;
+  }
+  .keypad-grid {
+    max-height: 150px;
+  }
+}
+
+@media (max-width: 650px) {
+  body {
+    padding: 10px;
+  }
+  header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+    padding: 15px;
+  }
+  .controls-row {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .dashboard {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  .board-viewport-container {
+    width: 100%;
+    aspect-ratio: 1;
+    height: auto;
+  }
+  .sudoku-board {
+    width: 100%;
+    height: 100%;
+  }
+  .sidebar {
+    width: 100%;
+  }
+}

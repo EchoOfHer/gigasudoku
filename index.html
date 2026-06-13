@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GigaSudoku - Ultra Hard Large-Scale Sudoku</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Game Header -->
+  <header class="glass-container">
+    <h1>GigaSudoku <span>PRO</span></h1>
+    <div class="controls-row">
+      <!-- Grid Size Select -->
+      <select id="grid-size-select">
+        <option value="9">9x9 (Classic)</option>
+        <option value="16">16x16 (Hexadoku)</option>
+        <option value="25" selected>25x25 (Alphadoku)</option>
+        <option value="36">36x36 (Gigadoku)</option>
+      </select>
+
+      <!-- Difficulty Select -->
+      <select id="difficulty-select">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+        <option value="expert">Expert</option>
+      </select>
+
+      <!-- Symbols Mode Select -->
+      <select id="symbol-mode-select">
+        <option value="letters">Letters / Alpha</option>
+        <option value="numbers">Numbers (1-N)</option>
+      </select>
+
+      <!-- New Game Button -->
+      <button id="new-game-btn" class="primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        New Game
+      </button>
+
+      <!-- Help Button -->
+      <button id="help-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Info Dashboard -->
+  <div class="dashboard glass-container">
+    <div class="stats-group">
+      <div class="stat-item">
+        <div class="stat-label">Grid Size</div>
+        <div id="stat-grid-size" class="stat-value">25x25</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Difficulty</div>
+        <div id="stat-difficulty" class="stat-value">Medium</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Progress</div>
+        <div id="stat-progress" class="stat-value">0 / 625</div>
+      </div>
+    </div>
+
+    <!-- Timer Control -->
+    <div class="stats-group" style="align-items: center;">
+      <div class="stat-item" style="text-align: right; margin-right: 15px;">
+        <div class="stat-label">Time Elapsed</div>
+        <div id="timer" class="stat-value timer">00:00</div>
+      </div>
+      <button id="pause-btn" style="padding: 8px;">
+        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Game Content -->
+  <div class="main-game-layout">
+    <!-- Board Viewport Container (Handles Zoom/Pan) -->
+    <div class="board-viewport-container glass-container">
+      
+      <!-- Overlay Loader -->
+      <div id="board-loader" class="board-loader">
+        <div class="spinner"></div>
+        <div id="loader-text" style="font-weight: 500; font-size: 1.1rem; color: var(--accent-cyan);">Generating Puzzle...</div>
+      </div>
+
+      <div id="board-viewport" class="board-viewport">
+        <!-- Interactive Sudoku Board -->
+        <div id="sudoku-board" class="sudoku-board">
+          <!-- Dynamically populated cells go here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Controls -->
+    <div class="sidebar">
+      
+      <!-- Gameplay Action Buttons -->
+      <div class="glass-container action-buttons">
+        <button id="undo-btn" title="Undo Last Move">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          Undo
+        </button>
+        <button id="redo-btn" title="Redo Last Move">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+          Redo
+        </button>
+        <button id="notes-btn" title="Toggle Pencil Notes (N)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Notes (Off)
+        </button>
+        <button id="clear-btn" title="Clear Selected Cell">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          Clear
+        </button>
+        <button id="hint-btn" title="Fill Cell with Correct Value">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></svg>
+          Hint
+        </button>
+        <button id="solve-btn" class="primary" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));" title="Instantly Solve Board">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Solve
+        </button>
+      </div>
+
+      <!-- Zoom / Viewport Navigation Controls -->
+      <div class="glass-container zoom-controls">
+        <div class="stat-label">Navigation & Zoom</div>
+        <div class="zoom-btn-group">
+          <button id="zoom-in-btn" title="Zoom In">+</button>
+          <button id="zoom-out-btn" title="Zoom Out">-</button>
+          <button id="zoom-reset-btn" title="Reset view">100%</button>
+        </div>
+      </div>
+
+      <!-- Dynamic Virtual Keypad -->
+      <div class="glass-container keypad-container">
+        <div class="keypad-title">
+          <span>Input Pad</span>
+          <span id="note-mode-indicator" style="color: var(--accent-purple); font-weight: 600; display: none;">[Notes Mode Active]</span>
+        </div>
+        <div id="keypad" class="keypad-grid">
+          <!-- Populated by JS based on selected grid size -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HELP MODAL -->
+  <div id="help-modal" class="modal">
+    <div class="modal-content glass-container">
+      <div class="modal-title">GigaSudoku Instructions</div>
+      <div class="modal-body">
+        <p>Welcome to <strong>GigaSudoku</strong>! This web game offers large-scale Sudoku grids designed for hardcore players who find normal 9x9 grids too simple.</p>
+        <p><strong>Rules:</strong> Fill the board so that every row, column, and sub-block (e.g. 5x5 sub-blocks for 25x25) contains every symbol exactly once.</p>
+        <p><strong>Controls:</strong></p>
+        <ul style="padding-left: 20px;">
+          <li><strong>Select a cell</strong>: Click or tap any cell on the board.</li>
+          <li><strong>Zoom & Pan</strong>: Scroll your mouse wheel or pinch to zoom. Click and drag the board to pan around. Highly recommended for 25x25 and 36x36!</li>
+          <li><strong>Keyboard</strong>: Use Arrow keys to navigate. Type numbers or letters to input. Press <strong>N</strong> to toggle Notes. Press <strong>Backspace / Delete</strong> to clear.</li>
+          <li><strong>Virtual Pad</strong>: Click on buttons in the virtual pad to input symbols. The count badge shows how many times that symbol has been placed.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button id="help-close-btn" class="primary">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WIN MODAL -->
+  <div id="win-modal" class="modal">
+    <div class="modal-content glass-container" style="text-align: center;">
+      <div class="modal-title" style="color: var(--accent-green); font-size: 2rem;">Congratulations!</div>
+      <div class="modal-body">
+        <p>You have successfully solved the puzzle!</p>
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin: 10px 0; display: flex; flex-direction: column; gap: 8px;">
+          <div><strong>Grid Size:</strong> <span id="win-grid-size">-</span></div>
+          <div><strong>Difficulty:</strong> <span id="win-difficulty">-</span></div>
+          <div><strong>Time Spent:</strong> <span id="win-time">-</span></div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: center;">
+        <button id="win-close-btn" class="primary">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAUSE MODAL -->
+  <div id="pause-modal" class="modal">
+    <div class="modal-content glass-container" style="text-align: center; max-width: 350px;">
+      <div class="modal-title" style="margin-bottom: 15px;">Game Paused</div>
+      <div class="modal-body">
+        <p>Click below to resume your game.</p>
+      </div>
+      <div class="modal-footer" style="justify-content: center; margin-top: 15px;">
+        <button id="resume-btn" class="primary" style="padding: 10px 30px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Resume
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
